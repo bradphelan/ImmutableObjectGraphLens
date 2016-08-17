@@ -119,7 +119,9 @@ namespace ImmutableObjectGraphLensSpec
             string data2 = "";
 
             lens2.WhenAnyValue(p => p.Current).Subscribe(current => data = current);
-            lens.DataWhenAnyValue(p => p.Cto.Name).Subscribe(current => data2 = current);
+
+            lens.Observe(p=>p.Name, p => p.Cto.Name, (companyName, ctoName)=>new {companyName, ctoName})
+                .Subscribe(current => data2 = current.ctoName);
 
             lens2.Current = "Brad";
             data.Should().Be("Brad");

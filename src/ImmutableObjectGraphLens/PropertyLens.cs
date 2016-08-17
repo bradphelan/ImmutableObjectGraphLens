@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
@@ -17,23 +16,22 @@ namespace Weingartner.Lens
     /// <summary>
     /// A Lens onto INPC property that holds an immutable object
     /// </summary>
-    /// <typeparam name="O"></typeparam>
-    /// <typeparam name="Source"></typeparam>
-    public class PropertyLens<O, Source> : ReactiveObject, ILens<Source>
-        where O : class, INotifyPropertyChanged
-        where Source : class
+    /// <typeparam name="TRoot"></typeparam>
+    /// <typeparam name="TImmutable"></typeparam>
+    public class PropertyLens<TRoot, TImmutable> : ReactiveObject, ILens<TImmutable>
+        where TRoot : class, INotifyPropertyChanged
+        where TImmutable : class
     {
-        private Expression<Func<O, Source>> _Selector;
-        private O _Root;
-        private Func<O, Source> _CompiledSelector;
-        private ImmutableLens<O, Source> _ImmutableLens;
+        private readonly Expression<Func<TRoot, TImmutable>> _Selector;
+        private readonly TRoot _Root;
+        private readonly Func<TRoot, TImmutable> _CompiledSelector;
 
-        public ILens<Prop> Focus<Prop>(Expression<Func<Source, Prop>> selector)
+        public ILens<TProp> Focus<TProp>(Expression<Func<TImmutable, TProp>> selector)
         {
-            return new Lens<Source, Prop>(this, selector);
+            return new Lens<TImmutable, TProp>(this, selector);
         }
 
-        public Source Current
+        public TImmutable Current
         {
             get
             {
@@ -44,14 +42,15 @@ namespace Weingartner.Lens
                 var prop = (PropertyInfo)((MemberExpression)_Selector.Body).Member;
                 prop.SetValue(_Root, value, null);
                 this.RaisePropertyChanged(prop.Name);
+                this.RaisePropertyChanged();
             }
         }
 
         public object Root => this;
 
-        public PropertyLens(O root, Expression<Func<O, Source>> selector)
+        public PropertyLens(TRoot root, Expression<Func<TRoot, TImmutable>> selector)
         {
-            _ImmutableLens = selector.CreateLens();
+            selector.CreateLens();
             if (root == null) throw new ArgumentNullException(nameof(root));
             if (selector == null) throw new ArgumentNullException(nameof(selector));
 
@@ -61,39 +60,6 @@ namespace Weingartner.Lens
             _Root = root;
             _Selector = selector;
             _CompiledSelector = _Selector.Compile();
-        }
-    }
-
-    public static class PropertyLensMixins
-    {
-        /// <summary>
-        /// Create a lens for a mutable property. The value
-        /// of the property should be immutable. 
-        /// </summary>
-        /// <typeparam name="TObject"></typeparam>
-        /// <typeparam name="TProperty"></typeparam>
-        /// <param name="o"></param>
-        /// <param name="selector">The expression should reference a property on the source object. Nested property
-        /// references will cause a runtime error. </param>
-        /// <returns></returns>
-        public static ILens<TProperty> PropertyLens<TObject, TProperty>
-            (this TObject o
-            , Expression<Func<TObject, TProperty>> selector
-            )
-            where TObject : class, INotifyPropertyChanged
-            where TProperty : class
-        {
-            return new PropertyLens<TObject, TProperty>(o, selector);
-        }
-
-        public static ILens<ImmutableList<TProperty>> PropertyLens<TObject, TProperty>
-            (this TObject o
-            , Expression<Func<TObject, ImmutableList<TProperty>>> selector
-            )
-            where TObject : class, INotifyPropertyChanged
-            where TProperty : class
-        {
-            return new PropertyLens<TObject, ImmutableList<TProperty>>(o, selector);
         }
     }
 }

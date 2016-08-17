@@ -41,21 +41,6 @@ namespace ImmutableObjectGraphLens
     }
 
 
-    public interface IDeletableLens<Prop> : ILens<Prop>
-    {
-        /// <summary>
-        /// Delete the resource associated with this lens. After
-        /// calling this the lens should be invalid.
-        /// </summary>
-        void Delete();
-
-        /// <summary>
-        /// Return true if the 
-        /// </summary>
-        /// <returns></returns>
-        bool Exists();
-    }
-
     public static class LensExtensions
     {
         /// <summary>
@@ -76,14 +61,7 @@ namespace ImmutableObjectGraphLens
         }
 
         #region WhenAny like behaviours
-        public static IObservable<P0> DataWhenAnyValue<Prop, P0>
-            ( this ILens<Prop> @this
-            , Func<Prop, P0> selector0
-            )
-        {
-            return @this.Observe(selector0);
-        }
-        public static IObservable<TResult> DataWhenAnyValue<Prop, P0,TResult>
+        public static IObservable<TResult> Observe<Prop, P0,TResult>
             ( this ILens<Prop> @this
             , Func<Prop, P0> selector0
             , Func<P0,TResult> fn
@@ -91,7 +69,7 @@ namespace ImmutableObjectGraphLens
         {
             return @this.Observe(selector0).Select(fn);
         }
-        public static IObservable<TResult> DataWhenAnyValue<Prop, P0,P1,TResult>
+        public static IObservable<TResult> Observe<Prop, P0,P1,TResult>
             ( this ILens<Prop> @this
             , Func<Prop, P0> selector0
             , Func<Prop, P1> selector1
@@ -105,7 +83,7 @@ namespace ImmutableObjectGraphLens
                     , fn
                     );
         }
-        public static IObservable<TResult> DataWhenAnyValue<Prop, P0,P1,P2,TResult>
+        public static IObservable<TResult> Observe<Prop, P0,P1,P2,TResult>
             ( this ILens<Prop> @this
             , Func<Prop, P0> selector0
             , Func<Prop, P1> selector1
@@ -121,7 +99,7 @@ namespace ImmutableObjectGraphLens
                     , fn
                     );
         }
-        public static IObservable<TResult> DataWhenAnyValue<Prop, P0,P1,P2,P3,TResult>
+        public static IObservable<TResult> Observe<Prop, P0,P1,P2,P3,TResult>
             ( this ILens<Prop> @this
             , Func<Prop, P0> selector0
             , Func<Prop, P1> selector1
@@ -194,35 +172,8 @@ namespace ImmutableObjectGraphLens
         {
             return new EmptyLens<T>();
         }
-
-        /// <summary>
-        /// A helper utility for registering dependency properties than are
-        /// based on ILens
-        /// </summary>
-        /// <typeparam name="LensProperty"></typeparam>
-        /// <typeparam name="Element"></typeparam>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public static System.Windows.DependencyProperty
-            RegisterDependencyProperty<LensProperty,Element>
-            (string name)
-        {
-            return System.Windows.DependencyProperty.Register
-                ( name
-                , typeof(ILeafLens<LensProperty>)
-                , typeof(Element)
-                , new System.Windows.PropertyMetadata(Lens.Empty<LensProperty>())
-                );
-        }
-
     }
 
-
-    public class LensException : Exception
-    {
-        public LensException(string message, Exception inner = null) : base(message, inner)
-        { }
-    };
 
     public class Lens<TRoot, TProperty> : ReactiveObject, ILens<TProperty>
     {
@@ -247,7 +198,7 @@ namespace ImmutableObjectGraphLens
             {
                 var current = _Root.Current;
                 _Root.Current = _ImmutableLens.Set(current, value);
-                this.RaisePropertyChanged("Current"); 
+                this.RaisePropertyChanged(); 
             }
         }
 
