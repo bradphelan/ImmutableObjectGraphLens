@@ -111,7 +111,7 @@ namespace ImmutableObjectGraphLensSpec
         public void MutableLensesShouldWork()
         {
             var root = new Root();
-            var lens = new PropertyLens<Root,Company>(root,c=>c.Company);
+            var lens = root.Focus(c=>c.Company);
 
             lens.Current.Cto.Name.Should().Be("john smith");
             var lens2 = lens.Focus(c => c.Cto.Name);

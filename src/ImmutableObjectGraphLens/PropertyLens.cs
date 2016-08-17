@@ -62,4 +62,24 @@ namespace Weingartner.Lens
             _CompiledSelector = _Selector.Compile();
         }
     }
+
+    public static class PropertyLensMixins
+    {
+        /// <summary>
+        /// Create a property lens based on a mutable property of root. The type of the property
+        /// should be an immutable property.
+        /// </summary>
+        /// <typeparam name="TRoot"></typeparam>
+        /// <typeparam name="TProp"></typeparam>
+        /// <param name="root"></param>
+        /// <param name="selector"></param>
+        /// <returns></returns>
+        public static PropertyLens<TRoot, TProp> Focus<TRoot, TProp>(this TRoot root, Expression<Func<TRoot, TProp>> selector)
+            where TRoot : class, INotifyPropertyChanged
+            where TProp : class
+
+        {
+            return new PropertyLens<TRoot, TProp>(root, selector);
+        }
+    }
 }
