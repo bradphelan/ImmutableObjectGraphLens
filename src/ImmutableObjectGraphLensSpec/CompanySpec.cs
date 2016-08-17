@@ -1,6 +1,9 @@
-﻿using FluentAssertions;
+﻿using System;
+using FluentAssertions;
 using ImmutableObjectGraphLens;
 using LanguageExt;
+using ReactiveUI;
+using Weingartner.Lens;
 using static LanguageExt.Prelude;
 using Xunit;
 
@@ -86,11 +89,44 @@ namespace ImmutableObjectGraphLensSpec
         {
             var company = Company.Create();
 
-            var l =  ImmutableLens.Create((Company c)=>c.Cto.Name);
+            var l =  ImmutableLens.CreateLens((Company c)=>c.Cto.Name);
 
             company = l.Set(company, "brad");
             l.Get(company).Should().Be("brad");
             company.Cto.Name.Should().Be("brad");
+
+        }
+
+        public class Root : ReactiveObject
+        {
+            Company _Company = Company.Create();
+            public Company Company 
+            {
+                get { return _Company; }
+                set { this.RaiseAndSetIfChanged(ref _Company, value); }
+            }
+        }
+
+        [Fact]
+        public void MutableLensesShouldWork()
+        {
+            var root = new Root();
+            var lens = new PropertyLens<Root,Company>(root,c=>c.Company);
+
+            lens.Current.Cto.Name.Should().Be("john smith");
+            var lens2 = lens.Focus(c => c.Cto.Name);
+            string data = "";
+            string data2 = "";
+
+            lens2.WhenAnyValue(p => p.Current).Subscribe(current => data = current);
+            lens.DataWhenAnyValue(p => p.Cto.Name).Subscribe(current => data2 = current);
+
+            lens2.Current = "Brad";
+            data.Should().Be("Brad");
+            data2.Should().Be("Brad");
+            lens2.Current.Should().Be("Brad");
+            lens.Current.Cto.Name.Should().Be("Brad");
+            root.Company.Cto.Name.Should().Be("Brad");
 
         }
     }

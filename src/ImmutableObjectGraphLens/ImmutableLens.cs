@@ -7,7 +7,13 @@ using ImmutableObjectGraph;
 
 namespace ImmutableObjectGraphLens
 {
-    public class ImmutableLens<TRoot, TTarget>
+    public interface IImmutableLens<TRoot, TTarget>
+    {
+        TRoot Set(TRoot root, TTarget value);
+        TTarget Get(TRoot root);
+    }
+
+    public class ImmutableLens<TRoot, TTarget> : IImmutableLens<TRoot, TTarget>
     {
         private readonly Expression<Func<TRoot, TTarget>> _Selector;
         private readonly Func<TRoot, TTarget> _CompiledSelector;
@@ -32,7 +38,7 @@ namespace ImmutableObjectGraphLens
        
     public static class ImmutableLens
     {
-        public static ImmutableLens<TRoot, TTarget> Create<TRoot,TTarget>
+        public static ImmutableLens<TRoot, TTarget> CreateLens<TRoot,TTarget>
             (this Expression<Func<TRoot, TTarget>> selector)
         {
             return new ImmutableLens<TRoot, TTarget>(selector);
